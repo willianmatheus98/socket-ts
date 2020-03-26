@@ -1,12 +1,14 @@
 import * as express from "express";
 import { createServer, Server } from 'http';
 import * as socketIo from 'socket.io';
+import { Message } from "./Message";
 
 class App {
     public app: express.Application;
     public server: Server;
     private io: SocketIO.Server;
     public PORT: number = 8100;
+    private users: number[] = [];
 
     constructor() {
         this.routes();
@@ -29,13 +31,16 @@ class App {
     private listen(): void {
 
         this.io.on('connection', (socket: any) => {
-
-            console.log('a user connected');
+            let userId = this.users.length + 1;
+            this.users.push(userId);
+            console.log(`a user connected with id ${userId}`);
 
             socket.on('chat message', (m: any) => {
-                this.io.emit('chat message', m);
+                let msg = new Message(userId, m);
+                console.log(`${userId} says: ${m}`);
+                socket.broadcast.emit('chat message', msg);
             });
-
+            
 
             socket.on('disconnect', () => {
                 console.log('user disconnected');
